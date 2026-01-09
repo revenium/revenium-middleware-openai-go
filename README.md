@@ -16,23 +16,27 @@ A lightweight, production-ready middleware that adds **Revenium metering and tra
 - **Production Ready** - Battle-tested and optimized for production use
 - **Type Safe** - Built with Go's strong typing system
 
-## Getting Started
+## Getting Started (5 minutes)
 
-### 1. Create Project Directory
+### Step 1: Create Your Project
 
 ```bash
-# Create project directory
 mkdir my-openai-project
 cd my-openai-project
-
-# Initialize Go module
 go mod init my-openai-project
-
-# Install Revenium middleware
-go get github.com/revenium/revenium-middleware-openai-go
 ```
 
-### 2. Create Environment File
+### Step 2: Install Dependencies
+
+```bash
+go get github.com/openai/openai-go/v3
+go get github.com/revenium/revenium-middleware-openai-go
+go mod tidy
+```
+
+This installs both the OpenAI SDK and the Revenium middleware.
+
+### Step 3: Create Environment File
 
 Create a `.env` file in your project root with your API keys:
 

@@ -17,8 +17,6 @@ import (
 	"github.com/openai/openai-go/v3/shared/constant"
 )
 
-const middlewareSource = "go"
-
 // ReveniumOpenAI is the main middleware client that wraps the OpenAI SDK
 // and adds metering capabilities
 type ReveniumOpenAI struct {
@@ -450,7 +448,7 @@ func buildErrorMeteringPayload(model string, metadata map[string]interface{}, is
 		"requestTime":             requestTimeISO,
 		"completionStartTime":     requestTimeISO,
 		"timeToFirstToken":        int64(0),
-		"middlewareSource":        middlewareSource,
+		"middlewareSource":        GetMiddlewareSource(),
 		"errorReason":             errorReason,
 	}
 
@@ -539,7 +537,7 @@ func buildMeteringPayload(resp *openai.ChatCompletion, metadata map[string]inter
 		"requestTime":             requestTimeISO,
 		"completionStartTime":     completionStartTimeISO,
 		"timeToFirstToken":        timeToFirstToken,
-		"middlewareSource":        middlewareSource,
+		"middlewareSource":        GetMiddlewareSource(),
 	}
 
 	if resp.SystemFingerprint != "" {

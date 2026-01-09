@@ -1,0 +1,32 @@
+# Public Repository Allowlist for revenium-middleware-openai-go
+# This file defines which files and directories are exported to the public repository
+# All paths are relative to the repository root
+# SAFEGUARD: Only files listed here will be synced to public repo
+
+# Source code
+revenium/
+
+# Example files
+examples/
+
+# Go module files
+go.mod
+go.sum
+
+# Environment and configuration
+.env.example
+.gitignore
+
+# Documentation
+README.md
+CHANGELOG.md
+AGENTS.md
+
+# Governance files
+CONTRIBUTING.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+LICENSE
+
+# Export configuration (include self)
+public-allowlist-go.txt
