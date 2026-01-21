@@ -252,6 +252,20 @@ func (c *CompletionsInterface) createCompletionOpenAI(ctx context.Context, param
 	// Record start time for duration calculation
 	requestTime := time.Now()
 
+	// Detect vision content in the request
+	hasVision := HasVisionContent(params)
+	if hasVision {
+		Debug("Vision content detected in request")
+	}
+
+	// Extract prompts if capture is enabled
+	var promptData *PromptData
+	if c.config.CapturePrompts {
+		data := ExtractPromptsFromParams(params)
+		promptData = &data
+		Debug("Prompt capture enabled - extracted request prompts")
+	}
+
 	// Call OpenAI API
 	resp, err := c.client.Chat.Completions.New(ctx, params)
 	if err != nil {
@@ -268,12 +282,19 @@ func (c *CompletionsInterface) createCompletionOpenAI(ctx context.Context, param
 	// Calculate duration
 	duration := time.Since(requestTime)
 
+	// Extract response content if prompt capture is enabled
+	if promptData != nil && c.config.CapturePrompts {
+		responseData := ExtractResponseContent(resp, promptData.PromptsTruncated)
+		promptData.OutputResponse = responseData.OutputResponse
+		promptData.PromptsTruncated = responseData.PromptsTruncated
+	}
+
 	// For non-streaming, completionStartTime is approximately the same as requestTime
 	// timeToFirstToken is 0 for non-streaming
 	c.parent.wg.Add(1)
 	go func() {
 		defer c.parent.wg.Done()
-		c.sendMeteringData(ctx, resp, metadata, false, duration, "OPENAI", requestTime, nil, 0)
+		c.sendMeteringDataWithPrompts(ctx, resp, metadata, false, duration, "OPENAI", requestTime, nil, 0, hasVision, promptData)
 	}()
 
 	return resp, nil
@@ -283,6 +304,20 @@ func (c *CompletionsInterface) createCompletionAzure(ctx context.Context, params
 	requestTime := time.Now()
 	originalModel := string(params.Model)
 	Debug("Using Azure deployment name '%s' from user", originalModel)
+
+	// Detect vision content in the request
+	hasVision := HasVisionContent(params)
+	if hasVision {
+		Debug("Vision content detected in Azure request")
+	}
+
+	// Extract prompts if capture is enabled
+	var promptData *PromptData
+	if c.config.CapturePrompts {
+		data := ExtractPromptsFromParams(params)
+		promptData = &data
+		Debug("Prompt capture enabled - extracted request prompts")
+	}
 
 	resp, err := c.client.Chat.Completions.New(ctx, params)
 	if err != nil {
@@ -297,10 +332,18 @@ func (c *CompletionsInterface) createCompletionAzure(ctx context.Context, params
 	}
 
 	duration := time.Since(requestTime)
+
+	// Extract response content if prompt capture is enabled
+	if promptData != nil && c.config.CapturePrompts {
+		responseData := ExtractResponseContent(resp, promptData.PromptsTruncated)
+		promptData.OutputResponse = responseData.OutputResponse
+		promptData.PromptsTruncated = responseData.PromptsTruncated
+	}
+
 	c.parent.wg.Add(1)
 	go func() {
 		defer c.parent.wg.Done()
-		c.sendMeteringData(ctx, resp, metadata, false, duration, "AZURE", requestTime, nil, 0)
+		c.sendMeteringDataWithPrompts(ctx, resp, metadata, false, duration, "AZURE", requestTime, nil, 0, hasVision, promptData)
 	}()
 
 	return resp, nil
@@ -308,6 +351,20 @@ func (c *CompletionsInterface) createCompletionAzure(ctx context.Context, params
 
 // createCompletionStreamingOpenAI creates a streaming chat completion using OpenAI native API
 func (c *CompletionsInterface) createCompletionStreamingOpenAI(ctx context.Context, params openai.ChatCompletionNewParams, metadata map[string]interface{}) (*StreamingWrapper, error) {
+	// Detect vision content in the request
+	hasVision := HasVisionContent(params)
+	if hasVision {
+		Debug("Vision content detected in streaming request")
+	}
+
+	// Extract prompts if capture is enabled
+	var promptData *PromptData
+	if c.config.CapturePrompts {
+		data := ExtractPromptsFromParams(params)
+		promptData = &data
+		Debug("Prompt capture enabled - extracted request prompts for streaming")
+	}
+
 	// Call OpenAI streaming API
 	stream := c.client.Chat.Completions.NewStreaming(ctx, params)
 
@@ -327,14 +384,16 @@ func (c *CompletionsInterface) createCompletionStreamingOpenAI(ctx context.Conte
 
 	// Wrap stream for metering tracking
 	wrapper := &StreamingWrapper{
-		stream:      stream,
-		config:      c.config,
-		metadata:    streamMetadata,
-		startTime:   time.Now(),
-		completions: c,
-		model:       string(params.Model),
-		provider:    "OPENAI",
-		parent:      c.parent,
+		stream:           stream,
+		config:           c.config,
+		metadata:         streamMetadata,
+		startTime:        time.Now(),
+		completions:      c,
+		model:            string(params.Model),
+		provider:         "OPENAI",
+		parent:           c.parent,
+		hasVisionContent: hasVision,
+		promptData:       promptData,
 	}
 
 	// Return the wrapper instead of the raw stream
@@ -344,6 +403,20 @@ func (c *CompletionsInterface) createCompletionStreamingOpenAI(ctx context.Conte
 func (c *CompletionsInterface) createCompletionStreamingAzure(ctx context.Context, params openai.ChatCompletionNewParams, metadata map[string]interface{}) (*StreamingWrapper, error) {
 	originalModel := string(params.Model)
 	Debug("Using Azure deployment name '%s' from user", originalModel)
+
+	// Detect vision content in the request
+	hasVision := HasVisionContent(params)
+	if hasVision {
+		Debug("Vision content detected in Azure streaming request")
+	}
+
+	// Extract prompts if capture is enabled
+	var promptData *PromptData
+	if c.config.CapturePrompts {
+		data := ExtractPromptsFromParams(params)
+		promptData = &data
+		Debug("Prompt capture enabled - extracted request prompts for Azure streaming")
+	}
 
 	stream := c.client.Chat.Completions.NewStreaming(ctx, params)
 
@@ -359,14 +432,16 @@ func (c *CompletionsInterface) createCompletionStreamingAzure(ctx context.Contex
 	}
 
 	wrapper := &StreamingWrapper{
-		stream:      stream,
-		config:      c.config,
-		metadata:    streamMetadata,
-		startTime:   time.Now(),
-		completions: c,
-		model:       originalModel,
-		provider:    "AZURE",
-		parent:      c.parent,
+		stream:           stream,
+		config:           c.config,
+		metadata:         streamMetadata,
+		startTime:        time.Now(),
+		completions:      c,
+		model:            originalModel,
+		provider:         "AZURE",
+		parent:           c.parent,
+		hasVisionContent: hasVision,
+		promptData:       promptData,
 	}
 
 	return wrapper, nil
@@ -398,10 +473,59 @@ type StreamingWrapper struct {
 
 	// System fingerprint tracking
 	systemFingerprint string
+
+	// Vision content tracking
+	hasVisionContent bool
+
+	// Prompt capture tracking
+	promptData         *PromptData
+	accumulatedContent string
 }
 
 func (c *CompletionsInterface) sendMeteringData(ctx context.Context, resp *openai.ChatCompletion, metadata map[string]interface{}, isStreamed bool, duration time.Duration, provider string, requestTime time.Time, completionStartTime *time.Time, timeToFirstToken int64) {
 	payload := buildMeteringPayload(resp, metadata, isStreamed, duration, provider, requestTime, completionStartTime, timeToFirstToken)
+	Debug("[METERING] About to send metering data...")
+	if err := c.sendMeteringWithRetry(payload); err != nil {
+		Error("Failed to send metering data: %v", err)
+	} else {
+		Debug("[METERING] Metering data sent successfully")
+	}
+}
+
+// sendMeteringDataWithPrompts sends metering data with prompt capture fields
+func (c *CompletionsInterface) sendMeteringDataWithPrompts(ctx context.Context, resp *openai.ChatCompletion, metadata map[string]interface{}, isStreamed bool, duration time.Duration, provider string, requestTime time.Time, completionStartTime *time.Time, timeToFirstToken int64, hasVision bool, promptData *PromptData) {
+	payload := buildMeteringPayload(resp, metadata, isStreamed, duration, provider, requestTime, completionStartTime, timeToFirstToken)
+
+	// Add vision content flag if present
+	if hasVision {
+		payload["hasVisionContent"] = true
+		Debug("[METERING] Vision content flag added to payload")
+	}
+
+	// Add prompt capture data if present
+	if promptData != nil {
+		AddPromptDataToPayload(payload, *promptData)
+		Debug("[METERING] Prompt capture data added to payload")
+	}
+
+	Debug("[METERING] About to send metering data...")
+	if err := c.sendMeteringWithRetry(payload); err != nil {
+		Error("Failed to send metering data: %v", err)
+	} else {
+		Debug("[METERING] Metering data sent successfully")
+	}
+}
+
+// sendMeteringDataWithVision sends metering data with vision content flag
+func (c *CompletionsInterface) sendMeteringDataWithVision(ctx context.Context, resp *openai.ChatCompletion, metadata map[string]interface{}, isStreamed bool, duration time.Duration, provider string, requestTime time.Time, completionStartTime *time.Time, timeToFirstToken int64, hasVision bool) {
+	payload := buildMeteringPayload(resp, metadata, isStreamed, duration, provider, requestTime, completionStartTime, timeToFirstToken)
+
+	// Add vision content flag if present
+	if hasVision {
+		payload["hasVisionContent"] = true
+		Debug("[METERING] Vision content flag added to payload")
+	}
+
 	Debug("[METERING] About to send metering data...")
 	if err := c.sendMeteringWithRetry(payload); err != nil {
 		Error("Failed to send metering data: %v", err)
@@ -660,6 +784,13 @@ func (sw *StreamingWrapper) Current() openai.ChatCompletionChunk {
 		sw.systemFingerprint = chunk.SystemFingerprint
 	}
 
+	// Accumulate content for prompt capture (if enabled)
+	if sw.promptData != nil && len(chunk.Choices) > 0 {
+		if delta := chunk.Choices[0].Delta.Content; delta != "" {
+			sw.accumulatedContent += delta
+		}
+	}
+
 	return chunk
 }
 
@@ -705,6 +836,15 @@ func (sw *StreamingWrapper) Close() error {
 		finishReason = "stop"
 	}
 
+	// Extract streaming response content for prompt capture (if enabled)
+	var finalPromptData *PromptData
+	if sw.promptData != nil {
+		responseData := ExtractStreamingResponseContent(sw.accumulatedContent, sw.promptData.PromptsTruncated)
+		sw.promptData.OutputResponse = responseData.OutputResponse
+		sw.promptData.PromptsTruncated = responseData.PromptsTruncated
+		finalPromptData = sw.promptData
+	}
+
 	resp := &openai.ChatCompletion{
 		ID:                generateRequestID(),
 		Model:             sw.model,
@@ -735,7 +875,7 @@ func (sw *StreamingWrapper) Close() error {
 	sw.parent.wg.Add(1)
 	go func() {
 		defer sw.parent.wg.Done()
-		sw.completions.sendMeteringData(context.Background(), resp, sw.metadata, true, duration, sw.provider, sw.startTime, completionStartTime, timeToFirstToken)
+		sw.completions.sendMeteringDataWithPrompts(context.Background(), resp, sw.metadata, true, duration, sw.provider, sw.startTime, completionStartTime, timeToFirstToken, sw.hasVisionContent, finalPromptData)
 	}()
 
 	return err

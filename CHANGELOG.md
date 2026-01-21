@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-01-21
+
+### Added
+- **Prompt Capture** - Opt-in feature to capture system prompts, input messages, and output responses for analytics (BACK-394)
+- **Vision Content Detection** - Automatic detection of GPT-4 Vision requests with image content (BACK-400)
+- `WithCapturePrompts()` option to enable prompt capture
+- `REVENIUM_CAPTURE_PROMPTS` environment variable support
+- UTF-8 safe truncation for multi-byte character preservation
+- Individual message truncation (before JSON serialization) to prevent invalid JSON
+
+### Fixed
+- Boolean parsing consistency for `REVENIUM_CAPTURE_PROMPTS` and `REVENIUM_DEBUG` (accepts both "true" and "1")
+
+## [0.0.3] - 2026-01-17
+
+### Added
+- AGENTS.md for AI agent context
+- Dynamic version detection using `runtime/debug.ReadBuildInfo()`
+
 ## [0.0.1] - 2025-12-16
 
 ### Added
