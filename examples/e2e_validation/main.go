@@ -110,7 +110,8 @@ func main() {
 	fmt.Println("\n=== Verification Info ===")
 	fmt.Printf("Trace ID:       %s\n", traceID)
 	fmt.Printf("Transaction ID: %s\n", transactionID)
-	fmt.Printf("\nTrace URL: https://ai.dev.hcapp.io/traces?traceId=%s\n", traceID)
+	// View traces in Revenium dashboard at: https://app.revenium.ai/traces?traceId=<your-trace-id>
+	fmt.Printf("\nVerify in Revenium dashboard with trace ID: %s\n", traceID)
 
 	// Print all metadata sent for comparison
 	fmt.Println("\n=== Metadata Sent (for verification) ===")
