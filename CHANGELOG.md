@@ -7,11 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-01-22
+
+### Added
+- **Audio API Support** - Full support for OpenAI Audio APIs with automatic metering
+  - Text-to-Speech (TTS) via `Audio().Speech().New()`
+  - Transcription (Whisper) via `Audio().Transcriptions().New()`
+  - Translation via `Audio().Translations().New()`
+  - Operation type `AUDIO` with subtypes: `tts`, `transcription`, `translation`
+  - Character count tracking for TTS billing
+  - Duration tracking for transcription/translation billing
+- **Images API Support** - Full support for OpenAI DALL-E APIs with automatic metering
+  - Image generation via `Images().Generate()`
+  - Image editing via `Images().Edit()`
+  - Image variations via `Images().NewVariation()`
+  - Operation type `IMAGE` with actual/requested image count tracking
+  - Quality, size, and output format attributes
+- Audio and Images examples in `examples/audio/` and `examples/images/`
+
 ## [0.0.4] - 2026-01-21
 
 ### Added
-- **Prompt Capture** - Opt-in feature to capture system prompts, input messages, and output responses for analytics (BACK-394)
-- **Vision Content Detection** - Automatic detection of GPT-4 Vision requests with image content (BACK-400)
+- **Prompt Capture** - Opt-in feature to capture system prompts, input messages, and output responses for analytics
+- **Vision Content Detection** - Automatic detection of GPT-4 Vision requests with image content
 - `WithCapturePrompts()` option to enable prompt capture
 - `REVENIUM_CAPTURE_PROMPTS` environment variable support
 - UTF-8 safe truncation for multi-byte character preservation
