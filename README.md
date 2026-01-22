@@ -11,6 +11,8 @@ A lightweight, production-ready middleware that adds **Revenium metering and tra
 
 - **Dual Provider Support** - Works with both OpenAI native API and Azure OpenAI
 - **Automatic Metering** - Tracks all API calls with detailed usage metrics
+- **Multimodal Support** - Image generation (DALL-E), speech synthesis, and audio transcription
+- **Vision Support** - Automatic detection and tracking of image content in chat messages
 - **Streaming Support** - Full support for streaming chat completions
 - **Custom Metadata** - Add custom tracking metadata to any request
 - **Production Ready** - Battle-tested and optimized for production use
@@ -75,6 +77,8 @@ This repository includes runnable examples demonstrating how to use the Revenium
 
 - [OpenAI Examples](https://github.com/revenium/revenium-middleware-openai-go/tree/HEAD/examples/openai)
 - [Azure OpenAI Examples](https://github.com/revenium/revenium-middleware-openai-go/tree/HEAD/examples/azure)
+- [Image Generation (DALL-E)](https://github.com/revenium/revenium-middleware-openai-go/tree/HEAD/examples/images/dalle)
+- [Audio Examples](https://github.com/revenium/revenium-middleware-openai-go/tree/HEAD/examples/audio) - Speech synthesis and transcription
 
 ### Run examples after setup:
 
@@ -90,6 +94,11 @@ make run-azure-getting-started
 make run-azure-basic
 make run-azure-streaming
 make run-azure-metadata
+
+# Multimodal Examples
+go run examples/images/dalle/main.go           # DALL-E image generation
+go run examples/audio/speech/main.go           # Text-to-speech
+go run examples/audio/transcription/main.go    # Speech-to-text (Whisper)
 ```
 
 ## What Gets Tracked
@@ -114,9 +123,16 @@ The middleware automatically captures comprehensive usage data:
 - **Quality Metrics** - Response quality score
 - **Subscriber Information** - Complete subscriber object with ID, email, and credentials
 
+### **Multimodal Content**
+
+- **Vision Detection** - Automatic detection of images in chat messages (`hasVisionContent`)
+- **Image Metrics** - Image count, total size, and media types when images are included
+- **Image Generation** - DALL-E model, size, quality settings tracked
+- **Audio Metrics** - Audio duration, format for speech and transcription
+
 ### **Technical Details**
 
-- **API Endpoints** - Chat completions (streaming and non-streaming)
+- **API Endpoints** - Chat completions, images, audio (streaming and non-streaming)
 - **Request Types** - Streaming vs non-streaming
 - **Provider Detection** - Automatic detection of OpenAI vs Azure OpenAI
 - **Middleware Source** - Automatically set to "go"
@@ -138,6 +154,7 @@ REVENIUM_AZURE_DISABLE=1  # Set to 1 to disable Azure OpenAI support
 REVENIUM_DEBUG=false  # Set to true to enable debug logging
 REVENIUM_METERING_BASE_URL=https://api.revenium.ai  # Optional, defaults to https://api.revenium.ai
 OPENAI_ORG_ID=org-your_organization_id  # Optional OpenAI organization ID
+REVENIUM_CAPTURE_PROMPTS=false  # Set to true to capture prompts and responses for analytics
 ```
 
 ### Required for Azure OpenAI
@@ -218,6 +235,50 @@ The middleware supports the following optional metadata fields for tracking:
 
 - [`examples/README.md`](https://github.com/revenium/revenium-middleware-openai-go/tree/HEAD/examples/README.md) - All usage examples
 - [Revenium API Reference](https://revenium.readme.io/reference/meter_ai_completion) - Complete API documentation
+
+## Prompt Capture (Optional Analytics)
+
+The middleware can optionally capture prompts and responses for analytics. This is **disabled by default** to protect privacy.
+
+### Enable Prompt Capture
+
+**Via Environment Variable:**
+
+```bash
+REVENIUM_CAPTURE_PROMPTS=true
+```
+
+**Or Programmatically:**
+
+```go
+import "github.com/revenium/revenium-middleware-openai-go/revenium"
+
+// Using configuration options
+cfg := &revenium.Config{
+    CapturePrompts: true,
+}
+client, err := revenium.NewReveniumOpenAI(cfg)
+
+// Or using functional options
+revenium.Initialize(revenium.WithCapturePrompts(true))
+```
+
+### What Gets Captured
+
+When enabled, the following fields are sent to Revenium:
+
+| Field | Description |
+|-------|-------------|
+| `systemPrompt` | System role message content |
+| `inputMessages` | User and assistant messages (JSON string) |
+| `outputResponse` | AI-generated response content |
+| `promptsTruncated` | `true` if any field was truncated |
+
+### Privacy & Limits
+
+- **Opt-in only** - Disabled by default, requires explicit enablement
+- **Truncation** - Each field is truncated at 50,000 characters
+- **Per-request override** - Can enable/disable for specific requests via metadata
 
 ## How It Works
 

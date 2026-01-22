@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/openai/openai-go/v3"
@@ -110,8 +111,12 @@ func main() {
 	fmt.Println("\n=== Verification Info ===")
 	fmt.Printf("Trace ID:       %s\n", traceID)
 	fmt.Printf("Transaction ID: %s\n", transactionID)
-	// View traces in Revenium dashboard at: https://app.revenium.ai/traces?traceId=<your-trace-id>
-	fmt.Printf("\nVerify in Revenium dashboard with trace ID: %s\n", traceID)
+	// Use REVENIUM_UI_URL env var or default to production
+	uiURL := os.Getenv("REVENIUM_UI_URL")
+	if uiURL == "" {
+		uiURL = "https://app.revenium.ai"
+	}
+	fmt.Printf("\nTrace URL: %s/traces?traceId=%s\n", uiURL, traceID)
 
 	// Print all metadata sent for comparison
 	fmt.Println("\n=== Metadata Sent (for verification) ===")
