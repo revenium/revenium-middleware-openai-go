@@ -1,3 +1,18 @@
+> [!IMPORTANT]
+> ## 📦 This package has moved to the unified Revenium SDK
+>
+> This middleware is now part of **[revenium-go-sdk](https://github.com/revenium/revenium-go-sdk)** — a single Go module that meters all supported AI providers.
+>
+> **Please migrate:**
+>
+> ```bash
+> go get github.com/revenium/revenium-go-sdk
+> ```
+>
+> This repository is consolidated into the unified SDK; please use `revenium-go-sdk` going forward.
+
+---
+
 # Revenium Middleware for OpenAI (Go)
 
 A lightweight, production-ready middleware that adds **Revenium metering and tracking** to OpenAI and Azure OpenAI API calls.
