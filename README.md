@@ -1,15 +1,19 @@
 > [!IMPORTANT]
 > ## 📦 This package has moved to the unified Revenium SDK
 >
-> This middleware is now part of **[revenium-go-sdk](https://github.com/revenium/revenium-go-sdk)** — a single Go module that meters all supported AI providers.
+> This middleware is now part of **[revenium-go-sdk](https://github.com/revenium/revenium-go-sdk)** — one module per provider, covering all supported AI providers.
 >
 > **Please migrate:**
 >
 > ```bash
-> go get github.com/revenium/revenium-go-sdk
+> go get github.com/revenium/revenium-go-sdk/openai
 > ```
 >
-> This repository is consolidated into the unified SDK; please use `revenium-go-sdk` going forward.
+> ```go
+> import reveniumopenai "github.com/revenium/revenium-go-sdk/openai"
+> ```
+>
+> This repository is consolidated into the unified SDK; please use `revenium-go-sdk/openai` going forward.
 
 ---
 

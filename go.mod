@@ -1,3 +1,4 @@
+// Deprecated: This module has moved to github.com/revenium/revenium-go-sdk/openai.
 module github.com/revenium/revenium-middleware-openai-go
 
 go 1.22
@@ -20,4 +21,13 @@ require (
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+retract (
+	v0.0.6 // Deprecation tombstone: use revenium-go-sdk/openai instead.
+	v0.0.5 // Consolidated into revenium-go-sdk/openai.
+	v0.0.4 // Consolidated into revenium-go-sdk/openai.
+	v0.0.3 // Consolidated into revenium-go-sdk/openai.
+	v0.0.2 // Consolidated into revenium-go-sdk/openai.
+	v0.0.1 // Consolidated into revenium-go-sdk/openai.
 )
